@@ -169,10 +169,16 @@ bool hidInterface::openInterface(uint VID, uint PID)
     HIDD_ATTRIBUTES tempHidAtributes;
     uint16_t k;
     std::wstring pathString;
-    hEventObject = CreateEvent((LPSECURITY_ATTRIBUTES)NULL, FALSE, TRUE, L"");
-    HIDOverlapped.hEvent = hEventObject;
-    HIDOverlapped.Offset = 0;
-    HIDOverlapped.OffsetHigh = 0;
+    //hEventObjectTx = CreateEvent((LPSECURITY_ATTRIBUTES)NULL, FALSE, TRUE, L"");
+    //hEventObjectRx = CreateEvent((LPSECURITY_ATTRIBUTES)NULL, FALSE, TRUE, L"");
+    HIDOverlappedRx.hEvent = hEventObjectRx = CreateEvent((LPSECURITY_ATTRIBUTES)NULL, FALSE, TRUE, L"");
+    HIDOverlappedRx.Offset = 0;
+    HIDOverlappedRx.OffsetHigh = 0;
+     qDebug()<<"hEventObjectRx = "<<hEventObjectRx;
+    HIDOverlappedTx.hEvent = hEventObjectTx = CreateEvent((LPSECURITY_ATTRIBUTES)NULL, FALSE, TRUE, L"");
+    HIDOverlappedTx.Offset = 0;
+    HIDOverlappedTx.OffsetHigh = 0;
+    qDebug()<<"hEventObjectRx = "<<hEventObjectTx;
 
     if(currentHID != NULL ) //class interface should be free
     {
@@ -249,15 +255,15 @@ uint32_t hidInterface::read(uint8_t *buff, uint32_t numToRead, uint32_t timeout)
          return 0;
      }
 
-     HIDOverlapped.Offset = 0;
-     HIDOverlapped.OffsetHigh = 0;
+     HIDOverlappedRx.Offset = 0;
+     HIDOverlappedRx.OffsetHigh = 0;
 
      Result = ReadFile (currentHID,
                         rxBuff,
                         numToRead + 1,
                         &numBytesOfRead,
-                        (LPOVERLAPPED) &HIDOverlapped);
-     Result = WaitForSingleObject(hEventObject,   timeout);
+                        (LPOVERLAPPED) &HIDOverlappedRx);
+     Result = WaitForSingleObject(hEventObjectRx,   timeout);
      switch (Result)
      {
          case WAIT_OBJECT_0:
@@ -292,14 +298,15 @@ uint32_t hidInterface::write(uint8_t *buff, uint32_t numToWrite, uint32_t timeou
         return 0;
     }
 
-    HIDOverlapped.Offset = 0;
-    HIDOverlapped.OffsetHigh = 0;
+    HIDOverlappedTx.Offset = 0;
+    HIDOverlappedTx.OffsetHigh = 0;
 
     txBuff[0] = 0;
     memcpy( &txBuff[1], buff, numToWrite);
 
-    WriteFile(currentHID, txBuff, numToWrite + 1, &numBytesOfWrite, (LPOVERLAPPED) &HIDOverlapped);
-    Result = WaitForSingleObject(hEventObject,   timeout);
+    WriteFile(currentHID, txBuff, numToWrite + 1, &numBytesOfWrite, (LPOVERLAPPED) &HIDOverlappedTx);
+
+    Result = WaitForSingleObject(hEventObjectTx, timeout);
 
     switch (Result) {
         case WAIT_OBJECT_0:

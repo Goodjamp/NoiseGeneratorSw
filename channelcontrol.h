@@ -16,7 +16,13 @@ class channelControl : public QWidget
 public:
     explicit channelControl(char inChannelIndex = 0 , QWidget *parent = nullptr);
     ~channelControl();
-    bool addPoint(double x, double y);
+    int getChannel();
+    int getLevel();
+    void getTiming(int *minHigh, int *maxHigh,
+                   int *minLow, int *maxLow);
+    bool isUse();
+    void setUse();
+    void clearUse();
 
 private:
     char channelIndex;
@@ -32,25 +38,8 @@ private:
        modulateLow,
     } modulateState;
 
-private slots:
-    void on_pushButtonSetConfig_clicked();
-
-    void on_pushButtonStopNoise_clicked();
-
-    void on_pushButtonSingleNoise_clicked();
-
-    void on_pushButtonModulateNoise_clicked();
-
-    void timeout();
-
 private:
     Ui::channelControl *ui;
-
-signals:
-    void stop(char channelIndex);
-    void startClockWise(char channelIndex);
-    void setRfCh(uint32_t rfCh);
-    void setOutLevel(uint32_t outLeve);
 };
 
 #endif // VOLTAGEGRAPH_H
