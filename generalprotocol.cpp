@@ -39,18 +39,6 @@ typedef struct {
 
 typedef struct {
     uint8_t  channel;
-}GpStartClockWiseSubcommand;
-
-typedef struct {
-    uint8_t  channel;
-}GpStartContrClockWiseSubcommand;
-
-typedef struct {
-    uint8_t  channel;
-}GpStoptSubcommand;
-
-typedef struct {
-    uint8_t  channel;
     uint16_t offTime;
     uint16_t onTime;
     uint32_t cnt;
@@ -62,12 +50,35 @@ typedef struct {
 }GpSetPos;
 
 typedef struct {
-    uint8_t rfChannel;
-}GpSeRfCh;
+    uint8_t devChCnt;
+    uint8_t chList[];
+}GpStartClockWiseSubcommand;
 
 typedef struct {
-    uint8_t outLevel;
-}GpSetOutLevel;
+    uint8_t devChCnt;
+    uint8_t chList[];
+}GpStartContrClockWiseSubcommand;
+
+typedef struct {
+    uint8_t devChCnt;
+    uint8_t chList[];
+}GpStoptSubcommand;
+
+typedef struct {
+    uint8_t devChCnt;
+    struct {
+        uint8_t devCh;
+        uint8_t rfCh;
+    } chList[];
+}GpsetRfCh;
+
+typedef struct {
+    uint8_t devChCnt;
+    struct {
+        uint8_t devCh;
+        uint8_t level;
+    } chList[];
+}GpSetLevel;
 
 typedef struct GpCommand{
     uint8_t headr;
@@ -78,8 +89,8 @@ typedef struct GpCommand{
         GpStoptSubcommand               stoptSubcommand;
         GpStartAutoSwitcher             startAutoSwitcherSubcommand;
         GpSetPos                        gpSetPos;
-        GpSeRfCh                        seRfCh;
-        GpSetOutLevel                   setOutLevel;
+        GpsetRfCh                       seRfCh;
+        GpSetLevel                      setOutLevel;
         uint8_t buffSubComand[PROTOCOL_BUFF_SIZE];
     };
 } GpCommand;
@@ -155,33 +166,43 @@ bool generalProtocol::gpDecode(uint8_t data[], uint32_t size)
     return true;
 }
 
-void generalProtocol::gpStopCommandTx(uint8_t channel)
+void generalProtocol::gpStopCommandTx(QVector<uint8_t> chDevList)
 {
     QVector<uint8_t> gpCommandV;
+
     gpCommandV.resize(sizeof(GpCommand));
     GpCommand *gpCommand = (GpCommand*)(gpCommandV.data());
     gpCommand->headr = GP_STOP;
-    gpCommand->stoptSubcommand.channel = static_cast<uint8_t>(channel);
+    gpCommand->stoptSubcommand.devChCnt = chDevList.size();
+    for (int k = 0; k < chDevList.size(); k++) {
+        gpCommand->stoptSubcommand.chList[k] = chDevList[k];
+    }
     emit gpSend(gpCommandV);
 }
 
-void generalProtocol::gpStartClockWiseCommandTx(uint8_t channel)
+void generalProtocol::gpStartClockWiseCommandTx(QVector<uint8_t> chDevList)
 {
     QVector<uint8_t> gpCommandV;
     gpCommandV.resize(sizeof(GpCommand));
     GpCommand *gpCommand = (GpCommand*)(gpCommandV.data());
     gpCommand->headr = GP_START_CLOCK_WISE;
-    gpCommand->stoptSubcommand.channel = static_cast<uint8_t>(channel);
+    gpCommand->startClockWiseSubcommand.devChCnt = chDevList.size();
+    for (int k = 0; k < chDevList.size(); k++) {
+        gpCommand->startClockWiseSubcommand.chList[k] = chDevList[k];
+    }
     emit gpSend(gpCommandV);
 }
 
-void generalProtocol::gpStartContrClockWiseCommandTx(uint8_t channel)
+void generalProtocol::gpStartContrClockWiseCommandTx(QVector<uint8_t> chDevList)
 {
     QVector<uint8_t> gpCommandV;
     gpCommandV.resize(sizeof(GpCommand));
     GpCommand *gpCommand = (GpCommand*)(gpCommandV.data());
     gpCommand->headr = GP_START_CONTR_CLOCK_WISE;
-    gpCommand->stoptSubcommand.channel = static_cast<uint8_t>(channel);
+    gpCommand->startContrClockWiseSubcommand.devChCnt = chDevList.size();
+    for (int k = 0; k < chDevList.size(); k++) {
+        gpCommand->startContrClockWiseSubcommand.chList[k] = chDevList[k];
+    }
     emit gpSend(gpCommandV);
 }
 
@@ -196,22 +217,30 @@ void generalProtocol::gpSetPosition(uint8_t channel, uint32_t position)
     emit gpSend(gpCommandV);
 }
 
-void generalProtocol::gpSetRfCh(uint32_t rfCh)
+void generalProtocol::gpSetRfCh(QVector<SetRfChArg> rfChList)
 {
     QVector<uint8_t> gpCommandV;
     gpCommandV.resize(sizeof(GpCommand));
     GpCommand *gpCommand = (GpCommand*)(gpCommandV.data());
     gpCommand->headr = GP_SET_RF_CH;
-    gpCommand->seRfCh.rfChannel = static_cast<uint8_t>(rfCh);
+    gpCommand->seRfCh.devChCnt = rfChList.size();
+    for (int k = 0; k < rfChList.size(); k++) {
+        gpCommand->seRfCh.chList[k].devCh = rfChList[k].devCh;
+        gpCommand->seRfCh.chList[k].rfCh = rfChList[k].rfCh;
+    }
     emit gpSend(gpCommandV);
 }
 
-void generalProtocol::gpSetOutLevel(uint32_t outLevel)
+void generalProtocol::gpSetOutLevel(QVector<SetLevelArg> levelList)
 {
     QVector<uint8_t> gpCommandV;
     gpCommandV.resize(sizeof(GpCommand));
-    GpCommand *gpCommand = reinterpret_cast<GpCommand*>(gpCommandV.data());
+    GpCommand *gpCommand = (GpCommand*)(gpCommandV.data());
     gpCommand->headr = GP_SET_OUT_LEVEL;
-    gpCommand->setOutLevel.outLevel = static_cast<uint8_t>(outLevel);
+    gpCommand->setOutLevel.devChCnt = levelList.size();
+    for (int k = 0; k < levelList.size(); k++) {
+        gpCommand->setOutLevel.chList[k].devCh = levelList[k].devCh;
+        gpCommand->setOutLevel.chList[k].level = levelList[k].level;
+    }
     emit gpSend(gpCommandV);
 }

@@ -31,8 +31,10 @@ public:
 
 private:
     HANDLE     currentHID;
-    HANDLE     hEventObject;
-    OVERLAPPED HIDOverlapped;
+    HANDLE     hEventObjectRx;
+    HANDLE     hEventObjectTx;
+    OVERLAPPED HIDOverlappedRx;
+    OVERLAPPED HIDOverlappedTx;
     uint8_t    txBuff[MAX_HID_PAYLOAD_SIZE];
     uint8_t    rxBuff[MAX_HID_PAYLOAD_SIZE];
 };

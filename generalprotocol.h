@@ -16,13 +16,23 @@ public:
     generalProtocol();
     ~generalProtocol();
 
+    typedef struct {
+        uint8_t devCh;
+        uint8_t rfCh;
+    } SetRfChArg;
+
+    typedef struct {
+        uint8_t devCh;
+        uint8_t level;
+    } SetLevelArg;
+
     bool gpDecode(uint8_t data[], uint32_t size);
-    void gpStopCommandTx(uint8_t channel);
-    void gpStartClockWiseCommandTx(uint8_t channel);
-    void gpStartContrClockWiseCommandTx(uint8_t channel);
+    void gpStopCommandTx(QVector<uint8_t> chDevList);
+    void gpStartClockWiseCommandTx(QVector<uint8_t> chDevList);
+    void gpStartContrClockWiseCommandTx(QVector<uint8_t> chDevList);
     void gpSetPosition(uint8_t channel, uint32_t pos);
-    void gpSetRfCh(uint32_t rfCh);
-    void gpSetOutLevel(uint32_t outLevel);
+    void gpSetRfCh(QVector<SetRfChArg> rfChList);
+    void gpSetOutLevel(QVector<SetLevelArg> levelList);
 signals:
     void gpDataRxSize8(QVector<uint8_t> Data);
     void gpDataRxSize16(QVector<uint16_t> Data);
